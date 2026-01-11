@@ -1,0 +1,20 @@
+{
+  "symbol": "AAPL",
+  "start": "2015-01-01",
+  "end": "2024-01-01",
+  "SEQ_LEN": 30,
+  "BATCH_SIZE": 32,
+  "EPOCHS": 100,
+  "MODEL_DIM": 128,
+  "NUM_HEADS": 8,
+  "NUM_LAYERS": 3,
+  "LR": 0.001,
+  "dropout": 0.2,
+  "weight_decay": 1e-5,
+  "patience": 20,
+  "use_positional_encoding": true,
+  "use_technical_indicators": true,
+  "gradient_clip_norm": 1.0,
+  "scheduler_patience": 5,
+  "scheduler_factor": 0.5
+}

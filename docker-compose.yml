@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: market-predictor-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./outputs:/app/outputs
+      - ./config.json:/app/config.json
+      - ./experiment_log.json:/app/experiment_log.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - market-predictor-network
+
+  # Optional: Add Nginx as reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: market-predictor-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - market-predictor-network
+
+  # Optional: Add Redis for caching
+  redis:
+    image: redis:alpine
+    container_name: market-predictor-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - market-predictor-network
+
+  # Optional: Add PostgreSQL for logging
+  postgres:
+    image: postgres:15-alpine
+    container_name: market-predictor-db
+    environment:
+      POSTGRES_DB: market_predictor
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: changeme123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - market-predictor-network
+
+networks:
+  market-predictor-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

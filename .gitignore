@@ -39,9 +39,12 @@ Thumbs.db
 
 # Project specific
 outputs/*.png
-outputs/*.pt
+# outputs/*.pt  # Commented out to include model in git for deployment
 *.log
 experiment_log.json
+sentiment_history.json
+predictions_log.json
+reports/*.pdf
 
 # Environment variables
 .env

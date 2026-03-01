@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample Frontend</title>
+</head>
+<body>
+    <h1>Welcome to AI Market Predictor</h1>
+    <button onclick="fetchHello()">Say Hello</button>
+    <div id="result"></div>
+    <script>
+        function fetchHello() {
+            fetch('http://localhost:8000/hello')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerText = data.message;
+                })
+                .catch(err => {
+                    document.getElementById('result').innerText = 'Error: ' + err;
+                });
+        }
+    </script>
+</body>
+</html>

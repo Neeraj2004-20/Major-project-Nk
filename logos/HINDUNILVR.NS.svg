@@ -1,0 +1,14 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hulGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0072C6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color="#00A0DC;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#hulGrad)" filter="url(#shadow)"/>
+  <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="900" font-size="18">HUL</text>
+  <path d="M 22 18 L 28 24 L 34 18 L 40 24 L 42 22" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

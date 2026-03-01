@@ -1,0 +1,14 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="infyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0072CE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0095DA;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#infyGrad)" filter="url(#shadow)"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Verdana, sans-serif" font-weight="bold" font-size="28" style="font-style:italic">i</text>
+  <circle cx="48" cy="20" r="3" fill="#FF6B35"/>
+</svg>

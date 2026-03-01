@@ -1,0 +1,15 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sbiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2348B5;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#sbiGrad)" filter="url(#shadow)"/>
+  <circle cx="32" cy="26" r="10" fill="white" opacity="0.2"/>
+  <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="900" font-size="18">SBI</text>
+  <path d="M 28 18 L 36 18 L 32 24 Z" fill="#FFD700"/>
+</svg>

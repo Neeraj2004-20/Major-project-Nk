@@ -1,0 +1,40 @@
+{
+  "predictions": {
+    "AAPL": [
+      {
+        "timestamp": "2026-02-23T10:26:10.761915",
+        "predicted_price": 159.79,
+        "current_price": 150.5,
+        "signal": "BUY",
+        "confidence": 0.62,
+        "engine": null,
+        "actual_price": null,
+        "accuracy": null
+      },
+      {
+        "timestamp": "2026-02-23T10:28:02.233606",
+        "predicted_price": 151.63,
+        "current_price": 155.5,
+        "signal": "SELL",
+        "confidence": 0.55,
+        "engine": null,
+        "actual_price": null,
+        "accuracy": null
+      }
+    ],
+    "MSFT": [
+      {
+        "timestamp": "2026-02-23T10:28:04.275670",
+        "predicted_price": 376.3,
+        "current_price": 380.25,
+        "signal": "HOLD",
+        "confidence": 0.52,
+        "engine": null,
+        "actual_price": null,
+        "accuracy": null
+      }
+    ]
+  },
+  "accuracy_scores": {},
+  "user_feedback": []
+}

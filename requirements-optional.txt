@@ -1,0 +1,59 @@
+# 📦 Optional Production Dependencies
+# Install these for enhanced functionality
+
+# ================================
+# OPTIONAL: Database Support
+# ================================
+sqlalchemy==2.0.23
+alembic==1.12.1  # Database migrations
+
+# ================================
+# OPTIONAL: Caching
+# ================================
+redis==5.0.1
+hiredis==2.2.3  # Speed up Redis
+
+# ================================
+# OPTIONAL: Monitoring & Logging
+# ================================
+python-json-logger==2.0.7
+prometheus-client==0.19.0  # Metrics export
+
+# ================================
+# OPTIONAL: Authentication
+# ================================
+python-jose==3.3.0
+passlib==1.7.4
+python-multipart==0.0.6
+
+# ================================
+# OPTIONAL: WebSocket Support
+# ================================
+python-socketio==5.10.0
+python-engineio==4.8.0
+
+# ================================
+# OPTIONAL: Database Drivers
+# ================================
+psycopg2-binary==2.9.9  # PostgreSQL
+motor==3.3.2  # MongoDB async driver
+
+# ================================
+# OPTIONAL: Advanced Monitoring
+# ================================
+psutil==5.9.6  # System metrics
+py-cpuinfo==9.0.0  # CPU info
+
+# ================================
+# OPTIONAL: Data Analysis
+# ================================
+pandas-profiling==4.0.0
+plotly==5.18.0
+
+# ================================
+# OPTIONAL: Testing
+# ================================
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2

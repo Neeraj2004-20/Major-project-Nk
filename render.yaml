@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: market-predictor-api
-    env: python
+    name: stocksense-ai
+    runtime: python
     region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Transformer-Based Market Movement Prediction</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #eee;
+        }
+        
+        .login-wrapper {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: rgba(22, 33, 62, 0.95);
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .login-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .login-header p {
+            color: #999;
+            font-size: 0.95em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #0f3460;
+            background: #0f3460;
+            color: #eee;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #16213e;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .form-group input::placeholder {
+            color: #666;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .demo-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 25px 0 20px 0;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .demo-info strong {
+            color: #667eea;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #0f3460;
+        }
+        
+        .divider span {
+            background: #16213e;
+            padding: 0 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .signup-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #999;
+        }
+        
+        .signup-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        .signup-link a:hover {
+            color: #764ba2;
+        }
+        
+        .error-message {
+            display: none;
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            font-size: 0.9em;
+        }
+        
+        .success-message {
+            display: none;
+            background: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #52c41a;
+            font-size: 0.9em;
+        }
+        
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .footer-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>Transformer-Based Market<br>Movement Prediction</h1>
+                <p>Advanced AI-Powered Trading Analysis</p>
+            </div>
+            
+            <div class="error-message" id="error-msg"></div>
+            <div class="success-message" id="success-msg"></div>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        placeholder="Enter your username"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <button type="submit" class="btn-login">Login to Dashboard</button>
+            </form>
+            
+            <div class="demo-info">
+                <strong>Demo Account:</strong><br>
+                Username: <code>admin</code><br>
+                Password: <code>password123</code>
+            </div>
+            
+            <div class="divider"><span>or</span></div>
+            
+            <div class="signup-link">
+                Don't have an account?<br>
+                <a href="register.html">Create New Account</a>
+            </div>
+        </div>
+        
+        <div class="footer-link">
+            <a href="/">Back to Home</a>
+        </div>
+    </div>
+    
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+            const successMsg = document.getElementById('success-msg');
+            
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                let data = {};
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('JSON Parse Error:', parseError);
+                    }
+                }
+                
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.access_token);
+                    
+                    successMsg.textContent = 'Login successful! Redirecting to dashboard...';
+                    successMsg.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    errorMsg.textContent = data.message || 'Invalid credentials. Please try again.';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Login failed: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+        
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

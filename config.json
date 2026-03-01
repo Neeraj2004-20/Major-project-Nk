@@ -17,4 +17,7 @@
   "gradient_clip_norm": 1.0,
   "scheduler_patience": 5,
   "scheduler_factor": 0.5
+"scheduler min lr"
+: 1e-6
 }
+

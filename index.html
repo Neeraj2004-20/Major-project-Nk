@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Market Predictor - Advanced Transformer Model</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .result-card {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+        
+        .result-card.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .result-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .result-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .result-change {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .result-change.up {
+            color: #28a745;
+        }
+        
+        .result-change.down {
+            color: #dc3545;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .api-info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .api-endpoint {
+            font-family: monospace;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .company-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            margin-right: 12px;
+            object-fit: contain;
+            background: #f8f9fa;
+            padding: 4px;
+        }
+        
+        .company-name-with-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .company-name-with-logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: #f8f9fa;
+            padding: 6px;
+        }
+        
+        .company-name-with-logo .company-details {
+            flex: 1;
+        }
+        
+        .company-name-with-logo .company-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .company-name-with-logo .company-ticker {
+            font-size: 14px;
+            color: #666;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Market Predictor</h1>
+            <p>Advanced Transformer-based Stock Market Prediction System</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('predict')">Live Prediction</button>
+                <button class="tab" onclick="switchTab('api')">API Documentation</button>
+                <button class="tab" onclick="switchTab('about')">About</button>
+            </div>
+            
+            <!-- Prediction Tab -->
+            <div id="predict-tab" class="tab-content active">
+                <div class="input-group">
+                    <label for="symbol">Select Indian Company</label>
+                    <select id="symbol" style="font-size: 16px; padding: 15px;">
+                        <optgroup label="📈 Top Performers (Bullish)">
+                            <option value="RELIANCE.NS">🏢 Reliance Industries</option>
+                            <option value="TCS.NS">💻 Tata Consultancy Services (TCS)</option>
+                            <option value="INFY.NS">💼 Infosys</option>
+                            <option value="HDFCBANK.NS">🏦 HDFC Bank</option>
+                            <option value="LT.NS">🏗️ Larsen & Toubro (L&T)</option>
+                        </optgroup>
+                        <optgroup label="📉 Declining Stocks (Bearish)">
+                            <option value="TATASTEEL.NS">⚙️ Tata Steel</option>
+                            <option value="VEDL.NS">⛏️ Vedanta Limited</option>
+                            <option value="ZEEL.NS">📺 Zee Entertainment</option>
+                            <option value="YESBANK.NS">🏦 Yes Bank</option>
+                            <option value="ADANIPORTS.NS">🚢 Adani Ports</option>
+                        </optgroup>
+                        <optgroup label="🚀 Growth Leaders (Strong Buy)">
+                            <option value="BAJFINANCE.NS">💰 Bajaj Finance</option>
+                            <option value="ASIANPAINT.NS">🎨 Asian Paints</option>
+                            <option value="MARUTI.NS">🚗 Maruti Suzuki</option>
+                            <option value="HINDUNILVR.NS">🧴 Hindustan Unilever</option>
+                            <option value="WIPRO.NS">💻 Wipro</option>
+                        </optgroup>
+                        <optgroup label="⚖️ Mixed Performance (Volatile)">
+                            <option value="ICICIBANK.NS">🏦 ICICI Bank</option>
+                            <option value="SBIN.NS">🏦 State Bank of India (SBI)</option>
+                            <option value="BHARTIARTL.NS">📱 Bharti Airtel</option>
+                            <option value="ITC.NS">🏭 ITC Limited</option>
+                            <option value="TATAMOTORS.NS">🚗 Tata Motors</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                
+                <div class="input-group">
+                    <label for="days">Prediction Period</label>
+                    <select id="days">
+                        <option value="1">Next Day (1 Day)</option>
+                        <option value="3">3 Days</option>
+                        <option value="7">1 Week (7 Days)</option>
+                        <option value="14">2 Weeks (14 Days)</option>
+                        <option value="30">1 Month (30 Days)</option>
+                        <option value="60">2 Months (60 Days)</option>
+                        <option value="90">3 Months (90 Days)</option>
+                        <option value="180">6 Months (180 Days)</option>
+                        <option value="365">1 Year (365 Days)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group" style="display: flex; align-items: center; gap: 15px;">
+                    <label style="margin: 0; flex: 1;">
+                        <input type="checkbox" id="liveMode" onchange="toggleLiveMode()" style="width: auto; margin-right: 8px;">
+                        🔴 Live Prediction Mode (Auto-refresh every 30s)
+                    </label>
+                    <span id="liveStatus" style="display: none; color: #28a745; font-weight: bold;">● LIVE</span>
+                </div>
+                
+                <button class="btn" onclick="predictLive()">🔮 Predict Price</button>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 15px;">Analyzing market data...</p>
+                </div>
+                
+                <div class="error" id="error"></div>
+                
+                <div class="result-card" id="result">
+                    <div class="result-header">Prediction Results</div>
+                    <div id="companyDisplay" class="company-name-with-logo" style="display: none;"></div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Current Price</div>
+                            <div class="stat-value" id="currentPrice">₹0.00</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Predicted Price</div>
+                            <div class="stat-value" id="predictedPrice">₹0.00</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Expected Change</div>
+                            <div class="stat-value" id="priceChange">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Direction</div>
+                            <div class="stat-value" id="direction">-</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px;">
+                        <h4 style="margin-bottom: 15px;">📈 Price Prediction Chart</h4>
+                        <canvas id="predictionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Tab -->
+            <div id="api-tab" class="tab-content">
+                <div class="api-info">
+                    <h3>📡 API Endpoints</h3>
+                    <p>Change the API_URL below to match your deployment:</p>
+                    
+                    <div class="input-group" style="margin-top: 20px;">
+                        <label for="apiUrl">API Base URL</label>
+                        <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="https://your-app.onrender.com">
+                        <button class="btn btn-secondary" onclick="updateApiUrl()" style="margin-top: 10px;">Update API URL</button>
+                    </div>
+                </div>
+                
+                <h4>Available Endpoints:</h4>
+                <div class="api-endpoint">GET /health - Health check</div>
+                <div class="api-endpoint">GET /model/info - Model information</div>
+                <div class="api-endpoint">POST /predict/live - Live stock prediction</div>
+                <div class="api-endpoint">GET /docs - Interactive API documentation</div>
+                
+                <button class="btn btn-secondary" onclick="testApi()" style="margin-top: 20px;">🧪 Test API Connection</button>
+                <div class="error" id="apiError"></div>
+                <div class="result-card" id="apiResult"></div>
+            </div>
+            
+            <!-- About Tab -->
+            <div id="about-tab" class="tab-content">
+                <h3>About This System</h3>
+                <p style="line-height: 1.6; color: #666; margin: 20px 0;">
+                    This advanced AI system uses a state-of-the-art Transformer neural network architecture 
+                    to predict stock market movements. The model analyzes 30+ technical indicators including 
+                    moving averages, MACD, RSI, Bollinger Bands, and volume patterns to make intelligent predictions.
+                </p>
+                
+                <h4 style="margin-top: 30px;">Features:</h4>
+                <ul style="line-height: 2; color: #666; margin: 20px 0 20px 40px;">
+                    <li>✨ Advanced Transformer architecture with positional encoding</li>
+                    <li>📊 30+ technical indicators</li>
+                    <li>🎯 Real-time market data analysis</li>
+                    <li>🔍 Attention visualization</li>
+                    <li>📈 Comprehensive performance metrics</li>
+                    <li>🌐 RESTful API with FastAPI</li>
+                </ul>
+                
+                <h4 style="margin-top: 30px;">Technology Stack:</h4>
+                <ul style="line-height: 2; color: #666; margin: 20px 0 20px 40px;">
+                    <li>PyTorch - Deep Learning Framework</li>
+                    <li>FastAPI - High-performance API</li>
+                    <li>Scikit-learn - Data Processing</li>
+                    <li>YFinance - Market Data</li>
+                    <li>Optuna - Hyperparameter Optimization</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 AI Market Predictor | Powered by Advanced Transformer Neural Networks</p>
+            <p style="margin-top: 5px; font-size: 12px;">For educational and research purposes only. Not financial advice.</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // API Configuration - Auto-detect if deployed or local
+        let API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8000' 
+            : 'https://vast-pants-search.loca.lt';
+        
+        // Load saved API URL from localStorage
+        if (localStorage.getItem('apiUrl')) {
+            API_URL = localStorage.getItem('apiUrl');
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('apiUrl').value = API_URL;
+        });
+        
+        let predictionChart = null;
+        let liveInterval = null;
+        let lastPredictionTime = null;
+        
+        function toggleLiveMode() {
+            const liveMode = document.getElementById('liveMode').checked;
+            const liveStatus = document.getElementById('liveStatus');
+            
+            if (liveMode) {
+                liveStatus.style.display = 'inline';
+                liveStatus.style.animation = 'blink 1s infinite';
+                // Start auto-refresh
+                predictLive();
+                liveInterval = setInterval(() => {
+                    predictLive();
+                }, 30000); // Every 30 seconds
+            } else {
+                liveStatus.style.display = 'none';
+                if (liveInterval) {
+                    clearInterval(liveInterval);
+                    liveInterval = null;
+                }
+            }
+        }
+        
+        function updateApiUrl() {
+            const newUrl = document.getElementById('apiUrl').value.trim();
+            if (!newUrl) {
+                showError('apiError', 'Please enter a valid URL');
+                return;
+            }
+            API_URL = newUrl;
+            localStorage.setItem('apiUrl', API_URL);
+            alert('API URL updated successfully!');
+            hideError('apiError');
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function predictLive() {
+            const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+            const days = parseInt(document.getElementById('days').value);
+            
+            if (!symbol) {
+                showError('error', 'Please enter a stock symbol');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            hideError('error');
+            
+            try {
+                const response = await fetch(`${API_URL}/predict/live`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        symbol: symbol,
+                        days_ahead: days 
+                    })
+                });
+                
+                document.getElementById('loading').classList.remove('show');
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'API request failed');
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                showError('error', `Error: ${error.message}. Make sure the API server is running and the URL is correct.`);
+            }
+        }
+        
+        function displayResults(data) {
+            // Get company info
+            const symbolSelect = document.getElementById('symbol');
+            const selectedOption = symbolSelect.options[symbolSelect.selectedIndex];
+            const companyName = selectedOption.text.replace(/^[^\s]+\s/, ''); // Remove emoji
+            const companySymbol = data.symbol;
+            
+            // Company logo mapping - Using reliable CDN sources
+            const logoMap = {
+                'RELIANCE.NS': 'https://companieslogo.com/img/orig/RELIANCE.NS-7fcd2e87.png',
+                'TCS.NS': 'https://companieslogo.com/img/orig/TCS.NS-7401f1bd.png',
+                'INFY.NS': 'https://companieslogo.com/img/orig/INFY.NS-c41f0574.png',
+                'HDFCBANK.NS': 'https://companieslogo.com/img/orig/HDFCBANK.NS-2c658136.png',
+                'LT.NS': 'https://companieslogo.com/img/orig/LT.NS-8b72eeea.png',
+                'TATASTEEL.NS': 'https://companieslogo.com/img/orig/TATASTEEL.NS-730ec62c.png',
+                'VEDL.NS': 'https://companieslogo.com/img/orig/VEDL.NS-98a86b36.png',
+                'ZEEL.NS': 'https://companieslogo.com/img/orig/ZEEL.NS-8c78c510.png',
+                'YESBANK.NS': 'https://companieslogo.com/img/orig/YESBANK.NS-6ca61b98.png',
+                'ADANIPORTS.NS': 'https://companieslogo.com/img/orig/ADANIPORTS.NS-6c599d69.png',
+                'BAJFINANCE.NS': 'https://companieslogo.com/img/orig/BAJFINANCE.NS-3d90e535.png',
+                'ASIANPAINT.NS': 'https://companieslogo.com/img/orig/ASIANPAINT.NS-09db07c4.png',
+                'MARUTI.NS': 'https://companieslogo.com/img/orig/MARUTI.NS-c11a3545.png',
+                'HINDUNILVR.NS': 'https://companieslogo.com/img/orig/HINDUNILVR.NS-7e4ec817.png',
+                'WIPRO.NS': 'https://companieslogo.com/img/orig/WIPRO.NS-6e635c6e.png',
+                'ICICIBANK.NS': 'https://companieslogo.com/img/orig/ICICIBANK.NS-6c44bf00.png',
+                'SBIN.NS': 'https://companieslogo.com/img/orig/SBIN.NS-5e283822.png',
+                'BHARTIARTL.NS': 'https://companieslogo.com/img/orig/BHARTIARTL.NS-8df01820.png',
+                'ITC.NS': 'https://companieslogo.com/img/orig/ITC.NS-0c966cbc.png',
+                'TATAMOTORS.NS': 'https://companieslogo.com/img/orig/TATAMOTORS.NS-1f7205ba.png'
+            };
+            
+            // Display company with logo
+            const companyDisplay = document.getElementById('companyDisplay');
+            const logoUrl = logoMap[companySymbol] || `https://ui-avatars.com/api/?name=${companyName}&background=667eea&color=fff&size=48`;
+            companyDisplay.innerHTML = `
+                <img src="${logoUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=667eea&color=fff&size=48'" alt="${companyName}">
+                <div class="company-details">
+                    <div class="company-title">${companyName}</div>
+                    <div class="company-ticker">${companySymbol}</div>
+                </div>
+            `;
+            companyDisplay.style.display = 'flex';
+            
+            document.getElementById('currentPrice').textContent = `₹${data.current_price.toFixed(2)}`;
+            document.getElementById('predictedPrice').textContent = `₹${data.predicted_price.toFixed(2)}`;
+            
+            const changePercent = data.change_percent.toFixed(2);
+            const changeElement = document.getElementById('priceChange');
+            changeElement.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
+            changeElement.className = 'stat-value ' + (changePercent > 0 ? 'up' : 'down');
+            
+            const directionElement = document.getElementById('direction');
+            directionElement.textContent = data.direction;
+            directionElement.className = 'stat-value ' + (data.direction === 'UP' ? 'up' : 'down');
+            
+            // Create prediction chart
+            createPredictionChart(data);
+            
+            // Update last prediction time
+            lastPredictionTime = new Date();
+            const timeString = lastPredictionTime.toLocaleTimeString();
+            document.getElementById('result').querySelector('.result-header').textContent = 
+                `Prediction Results (Updated: ${timeString})`;
+            
+            document.getElementById('result').classList.add('show');
+        }
+        
+        function createPredictionChart(data) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            
+            // Destroy previous chart if exists
+            if (predictionChart) {
+                predictionChart.destroy();
+            }
+            
+            const days = data.days_ahead || 1;
+            const currentPrice = data.current_price;
+            const predictedPrice = data.predicted_price;
+            const isPositive = data.change_percent > 0;
+            
+            // Generate intermediate points for smooth curve
+            const steps = 10;
+            const labels = [];
+            const prices = [];
+            
+            for (let i = 0; i <= steps; i++) {
+                labels.push(i === 0 ? 'Today' : i === steps ? `Day ${days}` : '');
+                const ratio = i / steps;
+                // Add some curve variation
+                const curvePrice = currentPrice + (predictedPrice - currentPrice) * (ratio + Math.sin(ratio * Math.PI) * 0.1);
+                prices.push(curvePrice);
+            }
+            
+            // Dynamic colors based on trend
+            const lineColor = isPositive ? '#28a745' : '#dc3545';
+            const gradientColor = isPositive 
+                ? 'rgba(40, 167, 69, 0.2)' 
+                : 'rgba(220, 53, 69, 0.2)';
+            
+            predictionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${data.symbol} - ${isPositive ? '📈 Bullish' : '📉 Bearish'} Prediction`,
+                        data: prices,
+                        borderColor: lineColor,
+                        backgroundColor: gradientColor,
+                        borderWidth: 4,
+                        pointRadius: [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+                        pointBackgroundColor: lineColor,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Price: ₹' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                callback: function(value) {
+                                    return '₹' + value.toFixed(0);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function testApi() {
+            hideError('apiError');
+            document.getElementById('apiResult').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                document.getElementById('apiResult').innerHTML = `
+                    <div class="result-header">✅ API Connection Successful</div>
+                    <pre style="background: white; padding: 15px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                `;
+                document.getElementById('apiResult').classList.add('show');
+                
+            } catch (error) {
+                showError('apiError', `Connection failed: ${error.message}. Check if the API URL is correct and the server is running.`);
+            }
+        }
+        
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+        
+        function hideError(elementId) {
+            document.getElementById(elementId).classList.remove('show');
+        }
+        
+        // Test API connection on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                fetch(`${API_URL}/health`)
+                    .then(() => console.log('API connected'))
+                    .catch(() => console.log('API not available - update URL in API Documentation tab'));
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

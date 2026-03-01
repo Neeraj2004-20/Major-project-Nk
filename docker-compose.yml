@@ -18,6 +18,7 @@ services:
       - market-predictor-network
 
   # Optional: Add Nginx as reverse proxy
+
   nginx:
     image: nginx:alpine
     container_name: market-predictor-nginx
@@ -56,6 +57,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - market-predictor-network
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    restart: always
     networks:
       - market-predictor-network
 

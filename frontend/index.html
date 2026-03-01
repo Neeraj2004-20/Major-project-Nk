@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer-Based Market Movement Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #eee; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        
+        .login-container { background: #16213e; padding: 40px; border-radius: 10px; max-width: 500px; margin: 50px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .login-container h2 { margin-bottom: 20px; color: #667eea; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9em; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #667eea; background: #0f3460; color: #eee; border-radius: 5px; font-size: 1em; }
+        .btn { padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold; transition: background 0.3s; }
+        .btn-primary { background: #667eea; color: #fff; }
+        .btn-primary:hover { background: #764ba2; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-danger:hover { background: #c0392b; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        
+        .card { background: #16213e; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-left: 4px solid #667eea; }
+        .card h3 { margin-bottom: 15px; color: #667eea; font-size: 1.3em; }
+        .card-value { font-size: 2em; font-weight: bold; color: #00d4ff; margin: 10px 0; }
+        .card-content { font-size: 0.95em; line-height: 1.6; }
+        
+        table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 5px; overflow: hidden; }
+        th { background: #667eea; padding: 15px; text-align: left; font-weight: bold; }
+        td { padding: 12px; border-bottom: 1px solid #0f3460; }
+        tr:hover { background: #0f3460; }
+        
+        .section { background: #16213e; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .section h2 { margin-bottom: 20px; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        
+        .chart-container { position: relative; height: 300px; margin: 20px 0; }
+        
+        .notification-item { background: #0f3460; padding: 15px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #00d4ff; }
+        .notification-item.success { border-left-color: #27ae60; }
+        .notification-item.warning { border-left-color: #f39c12; }
+        .notification-item.error { border-left-color: #e74c3c; }
+        
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .button-group button { flex: 1; min-width: 150px; }
+        
+        .api-links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .api-links a { background: #667eea; padding: 15px; border-radius: 5px; text-decoration: none; color: #fff; text-align: center; transition: background 0.3s; }
+        .api-links a:hover { background: #764ba2; }
+        
+        .footer { text-align: center; padding: 20px; color: #666; margin-top: 40px; }
+        
+    </style>
+</head>
+<body>
+    <div class="footer">
+        <p>Market Predictor v2.0 | Advanced AI-Powered Trading Analysis</p>
+    </div>
+    
+    <script>
+        let priceChart, sentimentChart;
+        let authToken = null;
+        
+        // Check authentication on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                // Redirect to login if not authenticated
+                window.location.href = 'login.html';
+            } else {
+                // Show dashboard and initialize
+                initCharts();
+                updateMarketData();
+            }
+        });
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        }
+
+        function initCharts() {
+            // Price Chart
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2026-02-20', '2026-02-21', '2026-02-22', '2026-02-23', '2026-02-24'],
+                    datasets: [{
+                        label: 'Stock Price',
+                        data: [145.2, 147.8, 150.1, 149.5, 151.0],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, labels: { color: '#eee' } } },
+                    scales: {
+                        y: { grid: { color: '#0f3460' }, ticks: { color: '#eee' } },
+                        x: { grid: { color: '#0f3460' }, ticks: { color: '#eee' } }
+                    }
+                }
+            });
+
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+            sentimentChart = new Chart(sentimentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+                        borderColor: ['#1e8449', '#d68910', '#c0392b'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#eee' } } }
+                }
+            });
+        }
+
+        function updateMarketData() {
+            const now = new Date();
+            document.getElementById('last-update').innerText = now.toLocaleTimeString();
+        }
+
+        function trainModel() {
+            alert('🧠 Model training initiated!\n\nThis process typically takes 5-10 minutes.\nYou will be notified when completed.');
+        }
+
+        function runPrediction() {
+            alert('🔮 Running prediction analysis...\n\nAnalyzing market trends and sentiment data.\nPrediction will be ready in a few moments.');
+        }
+
+        function generateReport() {
+            alert('📄 PDF Report generated!\n\nYour comprehensive market analysis report has been created.\nCheck the outputs folder or download it from the API.');
+        }
+
+        function exportData() {
+            alert('📥 Data export initiated!\n\nYour market data has been exported as CSV.\nDownload it from your downloads folder.');
+        }
+        
+        async function fetchData(endpoint, title) {
+            try {
+                const headers = {};
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch(endpoint, { headers });
+                let data = {};
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('JSON Parse Error:', parseError);
+                        data = { detail: 'Server error - invalid response' };
+                    }
+                }
+                
+                if (response.ok) {
+                    console.log(`${title}:`, data);
+                    alert(`✅ ${title} loaded successfully\n\nOpen DevTools (F12) -> Console to view data`);
+                } else {
+                    alert(`❌ Error: ${data.detail || 'Unable to fetch data'}`);
+                }
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

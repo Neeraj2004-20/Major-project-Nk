@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Market Predictor - Live Predictions & Graphs</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .status-item {
+            background: #f0f2f5;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .status-item span {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result.error {
+            border-left-color: #dc3545;
+        }
+        
+        .trend {
+            font-size: 2em;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .trend.up {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .trend.down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .trend.stable {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .signal {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .signal.buy {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .signal.sell {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .signal.hold {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .feedback-section {
+            background: #f0f2f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .feedback-option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .feedback-option input[type='radio'] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Transformer-Based Market Movement Prediction</h1>
+            <p>Live Predictions with AI Training & Historical Trends</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>Status:</span> Server Active ✓
+                </div>
+                <div class="status-item">
+                    <span>Predictions:</span> Database Active ✓
+                </div>
+                <div class="status-item">
+                    <span>AI Training:</span> Learning Mode ✓
+                </div>
+            </div>
+        </header>
+        
+        <div class="grid">
+            <!-- PREDICTION CARD -->
+            <div class="card">
+                <h2>Live Prediction</h2>
+                <div class="input-group">
+                    <label>Stock Symbol</label>
+                    <input type="text" id="symbol" placeholder="e.g., AAPL" value="AAPL" style="text-transform: uppercase;">
+                </div>
+                <div class="input-group">
+                    <label>Current Price ($)</label>
+                    <input type="number" id="currentPrice" placeholder="e.g., 150.50" value="150.50" step="0.01">
+                </div>
+                <button onclick="getPrediction()">Get Prediction</button>
+                
+                <div class="result" id="predictionResult">
+                    <div id="predictionContent"></div>
+                </div>
+            </div>
+            
+            <!-- GRAPH & TRENDS CARD -->
+            <div class="card">
+                <h2>Price Trends</h2>
+                <div class="input-group">
+                    <label>Symbol</label>
+                    <input type="text" id="trendSymbol" placeholder="e.g., AAPL" value="AAPL" style="text-transform: uppercase;">
+                </div>
+                <div class="input-group">
+                    <label>Days</label>
+                    <input type="number" id="trendDays" value="30" min="1" max="365">
+                </div>
+                <button onclick="getTrends()">View Trends</button>
+                
+                <div class="result" id="trendResult">
+                    <div id="trendContent"></div>
+                </div>
+            </div>
+            
+            <!-- AI TRAINING CARD -->
+            <div class="card">
+                <h2>AI Training</h2>
+                <div class="feedback-section">
+                    <label><strong>Was the prediction accurate?</strong></label>
+                    <div class="feedback-option">
+                        <input type="radio" id="correct" name="feedback" value="true" checked>
+                        <label for="correct" style="margin: 0;">✓ Correct (Helps AI Learn)</label>
+                    </div>
+                    <div class="feedback-option">
+                        <input type="radio" id="incorrect" name="feedback" value="false">
+                        <label for="incorrect" style="margin: 0;">✗ Incorrect (Helps AI Improve)</label>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Notes (Optional)</label>
+                    <input type="text" id="feedbackNotes" placeholder="What could be improved?">
+                </div>
+                
+                <button onclick="submitFeedback()">Submit Feedback</button>
+                
+                <button onclick="trainModel()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); margin-top: 10px;">
+                    Train AI Model
+                </button>
+                
+                <div class="result" id="trainingResult">
+                    <div id="trainingContent"></div>
+                </div>
+            </div>
+            
+            <!-- MODEL STATISTICS CARD -->
+            <div class="card">
+                <h2>AI Model Statistics</h2>
+                <button onclick="getModelStats()">Refresh Stats</button>
+                
+                <div class="metrics" id="statsMetrics">
+                    <div class="metric">
+                        <div class="metric-value">-</div>
+                        <div class="metric-label">Training Samples</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">-</div>
+                        <div class="metric-label">Total Predictions</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">-</div>
+                        <div class="metric-label">Avg Accuracy</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">-</div>
+                        <div class="metric-label">Symbols Tracked</div>
+                    </div>
+                </div>
+                
+                <div class="result" id="statsResult">
+                    <div id="statsContent"></div>
+                </div>
+            </div>
+            
+            <!-- ACCURACY METRICS CARD -->
+            <div class="card">
+                <h2>Prediction Accuracy</h2>
+                <div class="input-group">
+                    <label>Symbol</label>
+                    <input type="text" id="accuracySymbol" placeholder="e.g., AAPL" value="AAPL" style="text-transform: uppercase;">
+                </div>
+                <button onclick="getAccuracy()">Check Accuracy</button>
+                
+                <div class="result" id="accuracyResult">
+                    <div id="accuracyContent"></div>
+                </div>
+            </div>
+            
+            <!-- FULL CHART SECTION -->
+            <div class="card full-width">
+                <h2>Prediction vs Actual Price Chart</h2>
+                <div class="input-group">
+                    <label>Symbol</label>
+                    <input type="text" id="chartSymbol" placeholder="e.g., AAPL" value="AAPL" style="text-transform: uppercase;">
+                </div>
+                <button onclick="getGraphData()">Load Chart</button>
+                <div class="chart-container" id="chartContainer">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+                <div class="result" id="chartResult">
+                    <div id="chartContent"></div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>AI Market Predictor v2.0 | Live Predictions | Database | AI Training | Graphs</p>
+            <p>Submit feedback to continuously improve AI accuracy</p>
+        </footer>
+    </div>
+    
+    <script>
+        const API_BASE = `http://${window.location.hostname}:5503/api/ai`;
+        
+        async function getPrediction() {
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const price = parseFloat(document.getElementById('currentPrice').value);
+            
+            if (!symbol || !price) {
+                alert('Please enter symbol and price');
+                return;
+            }
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/predict?symbol=${symbol}&current_price=${price}`,
+                    { method: 'POST' }
+                );
+                const data = await response.json();
+                
+                let html = '<h3>Prediction Result</h3>';
+                if (data.data) {
+                    const pred = data.data;
+                    const signal = pred.signal.toLowerCase();
+                    html += `<p><strong>${symbol}</strong> at $${pred.current_price}</p>`;
+                    html += `<p>Predicted: <strong>$${pred.predicted_price}</strong></p>`;
+                    html += `<p>Change: <strong>${pred.price_change_percent.toFixed(2)}%</strong></p>`;
+                    html += `<p class="signal ${signal}">${pred.signal}</p>`;
+                    html += `<p>Confidence: <strong>${(pred.confidence*100).toFixed(1)}%</strong></p>`;
+                }
+                
+                document.getElementById('predictionContent').innerHTML = html;
+                document.getElementById('predictionResult').classList.add('show');
+            } catch (e) {
+                showError('predictionResult', e.message);
+            }
+        }
+        
+        async function getTrends() {
+            const symbol = document.getElementById('trendSymbol').value.toUpperCase();
+            const days = document.getElementById('trendDays').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/chart/${symbol}?days=${days}`);
+                const data = await response.json();
+                
+                let html = '<h3>Trend Analysis</h3>';
+                if (data.trend_analysis) {
+                    const trend = data.trend_analysis;
+                    const trendClass = trend.trend.includes('UP') ? 'up' : trend.trend.includes('DOWN') ? 'down' : 'stable';
+                    html += `<div class="trend ${trendClass}">${trend.trend}</div>`;
+                    html += `<p>Change: <strong>${trend.change_percent.toFixed(2)}%</strong></p>`;
+                    html += `<p>High: $${trend.high} | Low: $${trend.low}</p>`;
+                    html += `<p>Volatility: $${trend.volatility.toFixed(2)}</p>`;
+                }
+                
+                document.getElementById('trendContent').innerHTML = html;
+                document.getElementById('trendResult').classList.add('show');
+            } catch (e) {
+                showError('trendResult', e.message);
+            }
+        }
+        
+        async function submitFeedback() {
+            const correct = document.querySelector('input[name="feedback"]:checked').value === 'true';
+            const notes = document.getElementById('feedbackNotes').value;
+            
+            // In a real app, you'd get these from the last prediction
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const signal = 'BUY'; // Would be from actual prediction
+            
+            try {
+                const response = await fetch(`${API_BASE}/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        prediction_idx: 0,
+                        correct: correct,
+                        signal: signal,
+                        notes: notes
+                    })
+                });
+                const data = await response.json();
+                
+                document.getElementById('trainingContent').innerHTML = `
+                    <h3>Feedback Submitted!</h3>
+                    <p>${data.message}</p>
+                `;
+                document.getElementById('trainingResult').classList.add('show');
+            } catch (e) {
+                showError('trainingResult', e.message);
+            }
+        }
+        
+        async function trainModel() {
+            try {
+                const response = await fetch(`${API_BASE}/train`, { method: 'POST' });
+                const data = await response.json();
+                
+                let html = '<h3>Model Training Complete!</h3>';
+                if (data.training_summary) {
+                    const summary = data.training_summary;
+                    html += `<p>Feedback Processed: ${summary.feedback_processed}</p>`;
+                    html += `<p>Accuracy Rate: ${summary.accuracy_rate || 0}%</p>`;
+                    if (summary.signal_accuracy) {
+                        html += `<p>BUY Signal: ${(summary.signal_accuracy.BUY*100).toFixed(1)}%</p>`;
+                        html += `<p>SELL Signal: ${(summary.signal_accuracy.SELL*100).toFixed(1)}%</p>`;
+                    }
+                }
+                
+                document.getElementById('trainingContent').innerHTML = html;
+                document.getElementById('trainingResult').classList.add('show');
+            } catch (e) {
+                showError('trainingResult', e.message);
+            }
+        }
+        
+        async function getModelStats() {
+            try {
+                const response = await fetch(`${API_BASE}/model-stats`);
+                const data = await response.json();
+                
+                const model = data.ai_model;
+                const db = data.database;
+                
+                let html = `
+                    <div style="text-align: center;">
+                        <div class="metric-value">${model.training_samples}</div>
+                        <div class="metric-label">Training Samples</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="metric-value">${db.total_predictions}</div>
+                        <div class="metric-label">Total Predictions</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="metric-value">${db.average_accuracy || 0}%</div>
+                        <div class="metric-label">Avg Accuracy</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="metric-value">${db.symbols_tracked}</div>
+                        <div class="metric-label">Symbols Tracked</div>
+                    </div>
+                `;
+                
+                document.getElementById('statsMetrics').innerHTML = html;
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+        }
+        
+        async function getAccuracy() {
+            const symbol = document.getElementById('accuracySymbol').value.toUpperCase();
+            
+            try {
+                const response = await fetch(`${API_BASE}/accuracy/${symbol}`);
+                const data = await response.json();
+                
+                let html = '<h3>Accuracy Metrics</h3>';
+                if (data.accuracy_metrics) {
+                    const acc = data.accuracy_metrics;
+                    html += `<p>Average Accuracy: <strong>${acc.average || 0}%</strong></p>`;
+                    html += `<p>Best: ${acc.best || 0}% | Worst: ${acc.worst || 0}%</p>`;
+                    html += `<p>Predictions: ${data.total_predictions}</p>`;
+                }
+                
+                document.getElementById('accuracyContent').innerHTML = html;
+                document.getElementById('accuracyResult').classList.add('show');
+            } catch (e) {
+                showError('accuracyResult', e.message);
+            }
+        }
+        
+        async function getGraphData() {
+            const symbol = document.getElementById('chartSymbol').value.toUpperCase();
+            
+            try {
+                const response = await fetch(`${API_BASE}/graph/${symbol}`);
+                const data = await response.json();
+                
+                if (data.chart_data) {
+                    const chartData = data.chart_data;
+                    const ctx = document.getElementById('predictionChart').getContext('2d');
+                    
+                    if (window.myChart) window.myChart.destroy();
+                    
+                    window.myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: chartData.labels,
+                            datasets: [
+                                {
+                                    label: 'Predicted Price',
+                                    data: chartData.predicted,
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Actual Price',
+                                    data: chartData.actual,
+                                    borderColor: '#764ba2',
+                                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: { display: true, text: `${symbol} Predictions` },
+                                legend: { display: true }
+                            },
+                            scales: {
+                                y: { title: { display: true, text: 'Price ($)' } }
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Chart error:', e);
+            }
+        }
+        
+        function showError(elementId, message) {
+            document.getElementById(elementId).classList.add('show', 'error');
+            document.getElementById(elementId).querySelector('div').innerHTML = `<strong>Error:</strong> ${message}`;
+        }
+        
+        // Load stats on startup
+        window.addEventListener('load', () => {
+            getModelStats();
+        });
+    </script>
+</body>
+</html>

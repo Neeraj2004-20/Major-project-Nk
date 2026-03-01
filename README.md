@@ -1,8 +1,60 @@
-# Advanced Transformer-Based Market Movement Prediction (AIML)
+# 🎯 StockSense AI - Advanced Market Intelligence Platform
 
-A state-of-the-art deep learning project using advanced transformer architectures for financial market prediction with comprehensive technical indicators, attention visualization, and model interpretability.
+**Live Demo**: 🚀 *Coming Soon - Deploying Now!*
+
+A production-ready AI platform combining **Transformer Neural Networks** with **NLP Sentiment Analysis** for comprehensive stock market prediction and risk assessment.
+
+## ⚡ 7 Revolutionary Features
+
+### 🧠 Explainable AI
+Natural language explanations of ML predictions - Makes AI transparent and trustworthy
+
+### 🚨 Market Anomaly Detection
+Real-time detection of 7 market anomaly types with health scoring
+
+### 📊 Risk Scenario Engine
+AI-generated what-if scenarios with probability estimates
+
+### 📈 Prediction Tracker
+Historical accuracy validation with performance metrics
+
+### 📄 PDF Report Generator
+Professional prediction reports with all AI insights
+
+### 🔬 Backtesting Engine
+Historical trading simulation with win rate and Sharpe ratio
+
+### 📰 Sentiment Analysis (Multi-Modal AI)
+NLP sentiment from news articles with conflict detection
+
+---
 
 ## 🚀 Advanced Features
+
+### 🧠 **NEW: Explainable AI (Unique Feature)**
+- **Natural Language Explanations** - Converts complex model predictions into human-readable insights
+- **Technical Signal Analysis** - Automatically analyzes 30+ indicators and explains their impact
+- **Attention Pattern Interpretation** - Explains what the model focuses on
+- **Key Factor Identification** - Highlights the top factors driving each prediction
+- **Risk Assessment** - Evaluates prediction risk based on market conditions
+- **Confidence Scoring** - Shows model certainty for each prediction
+
+### 🚨 **NEW: Market Anomaly Detection (Ultra-Unique Feature)**
+- **Real-Time Anomaly Detection** - Identifies 7+ types of unusual market patterns
+- **Volume Spike Detection** - Catches abnormal trading activity (3σ+ events)
+- **Flash Crash Alerts** - Detects rapid price declines early
+- **Trend Reversal Detection** - Identifies potential market direction changes
+- **Technical Divergence Analysis** - Spots price-indicator misalignments
+- **Market Health Scoring** - 0-100 health score with color-coded warnings
+- **Risk Severity Classification** - CRITICAL, HIGH, MODERATE, LOW alerts
+
+### 📊 **NEW: AI Risk Scenarios (What-If Analysis)**
+- **5 AI-Generated Scenarios** - Best case, worst case, most likely, black swan, correction
+- **Probability Estimates** - Statistical likelihood for each scenario
+- **Target Price Projections** - Specific price targets with ranges
+- **Condition Analysis** - Market conditions required for each scenario
+- **Action Recommendations** - Specific trading strategies per scenario
+- **Timeframe Predictions** - When each scenario might unfold
 
 ### Model Architecture
 - **Advanced Transformer** with positional encoding and multi-head attention

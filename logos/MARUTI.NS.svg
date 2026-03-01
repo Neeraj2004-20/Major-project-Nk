@@ -1,0 +1,14 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="marutiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B71C1C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D32F2F;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#marutiGrad)" filter="url(#shadow)"/>
+  <path d="M 22 22 L 32 16 L 42 22 L 42 30 L 22 30 Z" fill="white" opacity="0.9"/>
+  <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="900" font-size="12">MARUTI</text>
+</svg>

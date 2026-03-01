@@ -13,3 +13,16 @@ seaborn>=0.12.0
 optuna>=3.3.0
 plotly>=5.15.0
 kaleido>=0.2.1
+reportlab>=3.6.0
+Pillow>=10.0.0
+vaderSentiment>=3.3.2
+newsapi-python>=0.2.7
+textblob>=0.17.1
+# LLM & AI/ML Dependencies
+transformers>=4.35.0
+huggingface-hub>=0.17.0
+python-dotenv>=1.0.0
+# Optional: For Ollama support (uncomment if using local LLMs)
+# ollama>=0.1.0
+# Optional: For Anthropic Claude support (uncomment if using)
+# anthropic>=0.7.0

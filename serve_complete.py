@@ -17,20 +17,6 @@ from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import time
 
-try:
-    from ai_llm_integration import create_ai_intelligence
-    AI_INTEGRATION_AVAILABLE = True
-except ImportError:
-    create_ai_intelligence = None
-    AI_INTEGRATION_AVAILABLE = False
-
-try:
-    from sentiment_analyzer import SentimentAnalyzer
-    SENTIMENT_ANALYZER_AVAILABLE = True
-except ImportError:
-    SentimentAnalyzer = None
-    SENTIMENT_ANALYZER_AVAILABLE = False
-
 # Initialize FastAPI app
 app = FastAPI(
     title="Transformer-Based Market Movement Prediction",
@@ -134,33 +120,6 @@ model = None
 model_config = None
 scaler = None
 model_info = {}
-ai_intelligence = None
-sentiment_analyzer = None
-
-
-def get_env_value(key: str, default: Optional[str] = None) -> Optional[str]:
-    """Read env var, with .env file fallback."""
-    value = os.getenv(key)
-    if value:
-        return value
-
-    env_path = ".env"
-    if not os.path.exists(env_path):
-        return default
-
-    try:
-        with open(env_path, "r", encoding="utf-8") as env_file:
-            for line in env_file:
-                cleaned = line.strip()
-                if not cleaned or cleaned.startswith("#") or "=" not in cleaned:
-                    continue
-                current_key, current_value = cleaned.split("=", 1)
-                if current_key.strip() == key:
-                    return current_value.strip().strip('"').strip("'")
-    except Exception:
-        return default
-
-    return default
 
 class PredictionRequest(BaseModel):
     sequence: List[List[float]] = Field(..., description="Input sequence")
@@ -176,38 +135,6 @@ class ReportRequest(BaseModel):
     company_name: str
     report_type: str = "prediction"
     include_explanation: bool = True
-
-
-class AIChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=4000)
-
-
-class AIAnalyzeRequest(BaseModel):
-    symbol: str = Field(..., min_length=1, max_length=20)
-    current_price: float
-    predicted_price: float
-    confidence: float = Field(default=0.7, ge=0.0, le=1.0)
-    technical_indicators: Optional[Dict] = None
-    news_headlines: Optional[List[str]] = None
-
-
-class AISymbolsRequest(BaseModel):
-    symbols: List[str]
-
-
-def get_ai_intelligence():
-    global ai_intelligence
-
-    if not AI_INTEGRATION_AVAILABLE:
-        raise HTTPException(status_code=503, detail="AI integration module unavailable")
-
-    if ai_intelligence is None:
-        try:
-            ai_intelligence = create_ai_intelligence("auto")
-        except Exception as e:
-            raise HTTPException(status_code=503, detail=f"AI initialization failed: {e}")
-
-    return ai_intelligence
 
 # ==================== MODEL LOADING ====================
 
@@ -236,7 +163,7 @@ def load_latest_model():
 
 # ==================== DASHBOARD ENDPOINTS ====================
 
-@app.get("/api")
+@app.get("/")
 async def home():
     return {"message": "Transformer-Based Market Movement Prediction API Running"}
 
@@ -378,45 +305,17 @@ async def backtest_strategy(request: BacktestRequest):
     }
 
 @app.get("/news-sentiment")
-async def news_sentiment(symbol: str = "AAPL", company_name: Optional[str] = None):
-    global sentiment_analyzer
-
-    if not SENTIMENT_ANALYZER_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Sentiment analyzer module unavailable")
-
-    if sentiment_analyzer is None:
-        newsapi_key = get_env_value("NEWSAPI_KEY")
-        if not newsapi_key:
-            raise HTTPException(status_code=503, detail="NEWSAPI_KEY not configured")
-        sentiment_analyzer = SentimentAnalyzer(newsapi_key=newsapi_key)
-
-    symbol_upper = symbol.upper()
-    default_company_map = {
-        "AAPL": "Apple",
-        "MSFT": "Microsoft",
-        "GOOGL": "Google",
-        "AMZN": "Amazon",
-        "META": "Meta",
-        "TSLA": "Tesla",
-        "NVDA": "NVIDIA"
-    }
-    resolved_company = company_name or default_company_map.get(symbol_upper, symbol_upper)
-
-    analysis = sentiment_analyzer.analyze_news_sentiment(symbol_upper, resolved_company)
-
+async def news_sentiment(symbol: str = "AAPL"):
     return {
-        "symbol": symbol_upper,
-        "company_name": resolved_company,
-        "sentiment_score": analysis.get("overall_score", 0.0),
-        "sentiment_label": analysis.get("overall_label", "neutral"),
-        "sentiment_trend": analysis.get("trend", "insufficient_data"),
-        "confidence": analysis.get("confidence", 0.0),
-        "article_count": analysis.get("article_count", 0),
-        "positive_count": analysis.get("positive_count", 0),
-        "negative_count": analysis.get("negative_count", 0),
-        "neutral_count": analysis.get("neutral_count", 0),
-        "recent_headlines": [a.get("title", "") for a in analysis.get("articles", [])[:5]],
-        "raw": analysis
+        "symbol": symbol,
+        "sentiment_score": 0.72,
+        "sentiment_label": "Positive",
+        "recent_headlines": [
+            "Apple Q1 earnings beat expectations",
+            "New iPhone 16 pre-orders exceed projections",
+            "Analyst upgrades Apple to Outperform"
+        ],
+        "sentiment_trend": "Improving"
     }
 
 @app.get("/model-performance")
@@ -475,75 +374,6 @@ async def get_notifications():
         ]
     }
 
-
-# ==================== AI/LLM ENDPOINTS ====================
-
-@app.post("/api/ai/chat")
-async def ai_chat(request: AIChatRequest):
-    ai_system = get_ai_intelligence()
-    response = ai_system.chat(request.message)
-    return {
-        "status": "success",
-        "response": response,
-        "timestamp": datetime.now().isoformat()
-    }
-
-
-@app.post("/api/ai/analyze")
-async def ai_analyze(request: AIAnalyzeRequest):
-    ai_system = get_ai_intelligence()
-
-    analysis = ai_system.analyze_stock(
-        symbol=request.symbol.upper(),
-        current_price=request.current_price,
-        predicted_price=request.predicted_price,
-        technical_indicators=request.technical_indicators or {},
-        news_headlines=request.news_headlines or [],
-        confidence=request.confidence
-    )
-
-    return {"status": "success", "data": analysis}
-
-
-@app.get("/api/ai/analyze/{symbol}")
-async def ai_get_cached_analysis(symbol: str):
-    ai_system = get_ai_intelligence()
-    key = symbol.upper()
-
-    if key not in ai_system.analysis_cache:
-        raise HTTPException(status_code=404, detail=f"No cached analysis found for {key}")
-
-    return {"status": "success", "data": ai_system.analysis_cache[key]}
-
-
-@app.get("/api/ai/conversation-history")
-async def ai_conversation_history(limit: int = 10):
-    ai_system = get_ai_intelligence()
-    history = ai_system.get_conversation_history()
-    return {"status": "success", "data": history[-max(limit, 1):]}
-
-
-@app.post("/api/ai/market-summary")
-async def ai_market_summary(request: AISymbolsRequest):
-    ai_system = get_ai_intelligence()
-    summary = ai_system.get_market_summary([s.upper() for s in request.symbols])
-    return {"status": "success", "data": summary}
-
-
-@app.get("/api/ai/alerts")
-async def ai_alerts(symbols: str = "AAPL,MSFT,GOOGL"):
-    ai_system = get_ai_intelligence()
-    symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
-    alerts = ai_system.get_trading_alerts(symbol_list)
-    return {"status": "success", "data": alerts}
-
-
-@app.get("/api/ai/performance")
-async def ai_performance():
-    ai_system = get_ai_intelligence()
-    metrics = ai_system.get_performance_metrics()
-    return {"status": "success", "data": metrics}
-
 @app.get("/health")
 async def health_check():
     return {
@@ -556,24 +386,7 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
-    global ai_intelligence, sentiment_analyzer
     load_latest_model()
-    if AI_INTEGRATION_AVAILABLE:
-        try:
-            ai_intelligence = create_ai_intelligence("auto")
-            print("[START] AI integration ready")
-        except Exception as e:
-            print(f"[WARN] AI integration not ready: {e}")
-    if SENTIMENT_ANALYZER_AVAILABLE:
-        try:
-            newsapi_key = get_env_value("NEWSAPI_KEY")
-            if newsapi_key:
-                sentiment_analyzer = SentimentAnalyzer(newsapi_key=newsapi_key)
-                print("[START] News sentiment integration ready")
-            else:
-                print("[WARN] NEWSAPI_KEY not configured; /news-sentiment will be unavailable")
-        except Exception as e:
-            print(f"[WARN] News sentiment integration not ready: {e}")
     print("[START] API startup complete")
     print(f"[START] Model status: {'Loaded' if model else 'Not loaded (template mode)'}")
     print("[START] Visit http://localhost:8000 for the dashboard")
@@ -581,4 +394,4 @@ async def startup_event():
 # ==================== MAIN ====================
 
 if __name__ == "__main__":
-    uvicorn.run("serve:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("serve_complete:app", host="0.0.0.0", port=8000, reload=True)

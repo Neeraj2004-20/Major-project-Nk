@@ -46,9 +46,12 @@ sentiment_history.json
 predictions_log.json
 reports/*.pdf
 
-# Environment variables
+# Environment variables & secrets - NEVER commit real keys
 .env
 .env.local
+.env.*
+*.env
+LLM_CONFIG.env
 
 # Large files
 *.csv

@@ -249,7 +249,7 @@
             
             <div class="signup-link">
                 Don't have an account?<br>
-                <a href="register.html">Create New Account</a>
+                <a href="/register">Create New Account</a>
             </div>
         </div>
         
@@ -298,7 +298,7 @@
                     successMsg.style.display = 'block';
                     
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = '/';
                     }, 1000);
                 } else {
                     errorMsg.textContent = data.message || 'Invalid credentials. Please try again.';
@@ -314,7 +314,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('authToken');
             if (token) {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }
         });
     </script>

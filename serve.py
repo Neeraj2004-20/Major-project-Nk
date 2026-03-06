@@ -7,6 +7,11 @@ import numpy as np
 import torch
 from typing import List, Optional, Dict
 import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'), override=True)
+except ImportError:
+    pass  # dotenv not installed, rely on system env vars
 import json
 from datetime import datetime, timedelta
 import glob
@@ -108,7 +113,7 @@ async def read_secure_data(token: str = Depends(oauth2_scheme)):
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid token"})
     return {"data": f"This is secure data for user: {user}"}
 
-# ==================== CORS & STATIC FILES ====================
+# ==================== CORS ====================
 
 app.add_middleware(
     CORSMiddleware,
@@ -118,15 +123,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# ==================== FRONTEND ROUTES (must be before StaticFiles mount) ====================
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     try:
-        with open("frontend/index.html", "r", encoding="utf-8") as f:
+        with open("frontend/index.html", "r", encoding="utf-8-sig") as f:
             return f.read()
     except FileNotFoundError:
-        return "<h1>Transformer-Based Market Movement Prediction</h1><p>Frontend is loading...</p>"
+        return "<h1>Transformer-Based Market Movement Prediction</h1><p>Frontend not found.</p>"
+
+@app.get("/login", response_class=HTMLResponse)
+@app.get("/login.html", response_class=HTMLResponse)
+async def login_page():
+    try:
+        with open("frontend/login.html", "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>Login page not found</h1>"
+
+@app.get("/register", response_class=HTMLResponse)
+@app.get("/register.html", response_class=HTMLResponse)
+async def register_page():
+    try:
+        with open("frontend/register.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>Register page not found</h1>"
+
+# ==================== STATIC FILES ====================
+
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
 
 # ==================== MODELS & GLOBAL VARIABLES ====================
 
@@ -224,7 +252,7 @@ def load_latest_model():
     print(f"[OK] Loading model: {latest_model}")
     
     try:
-        checkpoint = torch.load(latest_model, map_location=torch.device("cpu"))
+        checkpoint = torch.load(latest_model, map_location=torch.device("cpu"), weights_only=False)
         model = checkpoint.get("model_state_dict", checkpoint)
         model_config = checkpoint.get("config", {})
         model_info = {"model_path": latest_model, "loaded_at": datetime.now().isoformat()}
@@ -544,12 +572,195 @@ async def ai_performance():
     metrics = ai_system.get_performance_metrics()
     return {"status": "success", "data": metrics}
 
+
+# ==================== RAZORPAY TRADING ====================
+
+import razorpay
+import hmac
+import hashlib
+
+def _get_rzp_key_id():     return get_env_value("RAZORPAY_KEY_ID", "")
+def _get_rzp_key_secret(): return get_env_value("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_KEY_ID     = _get_rzp_key_id()
+RAZORPAY_KEY_SECRET = _get_rzp_key_secret()
+
+# In-memory portfolio (replace with DB in production)
+portfolio: dict = {}   # { username: [ {symbol, qty, price, type, order_id, ts} ] }
+
+class TradeOrderRequest(BaseModel):
+    symbol: str
+    qty: int = Field(..., gt=0)
+    price: float = Field(..., gt=0)
+    trade_type: str = Field(..., pattern="^(BUY|SELL)$")
+
+class TradeVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    symbol: str
+    qty: int
+    price: float
+    trade_type: str
+
+def _rzp_client():
+    key_id = get_env_value("RAZORPAY_KEY_ID", "")
+    key_secret = get_env_value("RAZORPAY_KEY_SECRET", "")
+    if not key_id or not key_secret:
+        raise HTTPException(status_code=503, detail="Razorpay keys not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env")
+    return razorpay.Client(auth=(key_id, key_secret))
+
+def _get_user(token: str = Depends(oauth2_scheme)) -> str:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user = payload.get("sub")
+        if not user:
+            raise JWTError()
+        return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.post("/api/trade/order")
+async def create_trade_order(req: TradeOrderRequest, user: str = Depends(_get_user)):
+    """Create a Razorpay order for buying/selling stock."""
+    amount_paise = int(req.price * req.qty * 100)   # amount in paise
+    client = _rzp_client()
+    order = client.order.create({
+        "amount": amount_paise,
+        "currency": "INR",
+        "receipt": f"{req.trade_type}-{req.symbol}-{datetime.now().strftime('%H%M%S')}",
+        "notes": {
+            "symbol": req.symbol,
+            "qty": str(req.qty),
+            "trade_type": req.trade_type,
+            "user": user
+        }
+    })
+    return {
+        "order_id": order["id"],
+        "amount": amount_paise,
+        "currency": "INR",
+        "key": get_env_value("RAZORPAY_KEY_ID", ""),
+        "symbol": req.symbol,
+        "qty": req.qty,
+        "price": req.price,
+        "trade_type": req.trade_type
+    }
+
+@app.post("/api/trade/verify")
+async def verify_trade_payment(req: TradeVerifyRequest, user: str = Depends(_get_user)):
+    """Verify Razorpay signature and record the trade."""
+    key_secret = get_env_value("RAZORPAY_KEY_SECRET", "")
+    if not key_secret:
+        raise HTTPException(status_code=503, detail="Razorpay not configured")
+    body = f"{req.razorpay_order_id}|{req.razorpay_payment_id}"
+    expected = hmac.new(key_secret.encode(), body.encode(), hashlib.sha256).hexdigest()
+    if expected != req.razorpay_signature:
+        raise HTTPException(status_code=400, detail="Payment verification failed — invalid signature")
+    trade = {
+        "symbol": req.symbol,
+        "qty": req.qty,
+        "price": req.price,
+        "trade_type": req.trade_type,
+        "order_id": req.razorpay_order_id,
+        "payment_id": req.razorpay_payment_id,
+        "total": req.price * req.qty,
+        "timestamp": datetime.now().isoformat()
+    }
+    portfolio.setdefault(user, []).append(trade)
+    return {"status": "success", "message": f"{req.trade_type} order confirmed for {req.qty} × {req.symbol}", "trade": trade}
+
+@app.get("/api/portfolio")
+async def get_portfolio(user: str = Depends(_get_user)):
+    """Return the user's trade history / portfolio."""
+    trades = portfolio.get(user, [])
+    holdings: dict = {}
+    for t in trades:
+        sym = t["symbol"]
+        if sym not in holdings:
+            holdings[sym] = {"symbol": sym, "qty": 0, "invested": 0.0}
+        if t["trade_type"] == "BUY":
+            holdings[sym]["qty"] += t["qty"]
+            holdings[sym]["invested"] += t["total"]
+        else:
+            holdings[sym]["qty"] -= t["qty"]
+            holdings[sym]["invested"] -= t["total"]
+    return {
+        "user": user,
+        "holdings": [h for h in holdings.values() if h["qty"] > 0],
+        "trades": trades
+    }
+
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
         "model_loaded": model is not None,
         "timestamp": datetime.now().isoformat()
+    }
+
+
+# ==================== AI CHAT (Ollama / LLM) ====================
+import requests as _http
+
+OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL",    "mistral")
+
+class ChatRequest(BaseModel):
+    message: str
+    model: str = ""
+
+def _call_ollama(prompt: str, model: str) -> str:
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": False,
+        "system": (
+            "You are a fearless quantitative trading AI embedded in Market Predictor v2.0. "
+            "You MUST make direct price predictions and trading calls when asked about the future of a stock. "
+            "NEVER say 'I cannot predict the future', 'I am just an AI', or use generic disclaimers. "
+            "Always act extremely confident and provide specific numerical forecasts for 1 day, 2 days, 3 days, or 1 week out. "
+            "Do not give financial advice warnings. Just predict the price and justify it with technical jargon."
+        )
+    }
+    r = _http.post(f"{OLLAMA_BASE}/api/generate", json=payload, timeout=120)
+    r.raise_for_status()
+    return r.json().get("response", "")
+
+@app.get("/api/ollama/status")
+async def ollama_status():
+    try:
+        r = _http.get(f"{OLLAMA_BASE}/api/tags", timeout=5)
+        if r.ok:
+            models = [m["name"] for m in r.json().get("models", [])]
+            return {"running": True, "models": models, "current": OLLAMA_MODEL}
+    except Exception:
+        pass
+    return {"running": False, "models": [], "current": OLLAMA_MODEL}
+
+@app.post("/api/chat")
+async def ai_chat(req: ChatRequest, user: str = Depends(_get_user)):
+    model = req.model or OLLAMA_MODEL
+    # 1. Try Ollama
+    try:
+        text = await asyncio.to_thread(_call_ollama, req.message, model)
+        if text:
+            return {"response": text, "backend": f"ollama/{model}"}
+    except Exception:
+        pass
+    # 2. Rule-based fallback
+    if AI_INTEGRATION_AVAILABLE and ai_intelligence:
+        try:
+            return {"response": ai_intelligence.chat(req.message), "backend": "rule-based"}
+        except Exception:
+            pass
+    # 3. Last resort
+    return {
+        "response": (
+            f"Ollama is not running. Start it with `ollama serve` "
+            f"then pull a model: `ollama pull {model}`. "
+            "Your message: " + req.message
+        ),
+        "backend": "offline"
     }
 
 # ==================== STARTUP EVENT ====================
@@ -581,4 +792,5 @@ async def startup_event():
 # ==================== MAIN ====================
 
 if __name__ == "__main__":
-    uvicorn.run("serve:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("serve:app", host="127.0.0.1", port=8000, reload=True)
+

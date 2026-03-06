@@ -111,15 +111,54 @@ def start_server():
             """Get system health status"""
             return health_check.get_health()
         
+        @app.get("/", tags=["Dashboard"])
+        async def root():
+            """Serve AI prediction dashboard"""
+            from fastapi.responses import HTMLResponse
+            try:
+                dashboard_file = Path("frontend/index.html")
+                if dashboard_file.exists():
+                    return HTMLResponse(content=dashboard_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                pass
+            return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
+
         @app.get("/dashboard", tags=["Dashboard"])
         async def dashboard():
             """Serve AI prediction dashboard"""
             from fastapi.responses import HTMLResponse
-            dashboard_file = Path("predictor_dashboard.html")
-            if dashboard_file.exists():
-                return HTMLResponse(content=dashboard_file.read_text())
+            try:
+                dashboard_file = Path("frontend/index.html")
+                if dashboard_file.exists():
+                    return HTMLResponse(content=dashboard_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                pass
             return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
         
+        @app.get("/login", tags=["Dashboard"])
+        @app.get("/login.html", tags=["Dashboard"])
+        async def login_page():
+            from fastapi.responses import HTMLResponse
+            try:
+                login_file = Path("frontend/login.html")
+                if login_file.exists():
+                    return HTMLResponse(content=login_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                pass
+            return HTMLResponse(content="<h1>Login page not found</h1>", status_code=404)
+
+        @app.get("/register", tags=["Dashboard"])
+        @app.get("/register.html", tags=["Dashboard"])
+        async def register_page():
+            from fastapi.responses import HTMLResponse
+            try:
+                register_file = Path("frontend/register.html")
+                if register_file.exists():
+                    return HTMLResponse(content=register_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+            return HTMLResponse(content="<h1>Register page not found</h1>", status_code=404)
+
         @app.get("/metrics", tags=["System"])
         async def metrics():
             """Get system metrics and performance stats"""
@@ -166,6 +205,60 @@ def start_server():
         app.include_router(web_app_router)
         print("     ✓ Professional trading dashboard loaded\n")
 
+        # ==================================
+        # AI CHAT / OLLAMA COMPATIBILITY
+        # ==================================
+        import requests as _http
+        import os
+        import asyncio
+        from pydantic import BaseModel
+        
+        OLLAMA_BASE = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
+        
+        class ChatRequest(BaseModel):
+            message: str
+            model: str = ""
+            
+        def _call_ollama(prompt: str, model: str) -> str:
+            payload = {
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "system": "You are a fearless quantitative trading AI embedded in Market Predictor v2.0. You MUST make direct price predictions and trading calls when asked about the future of a stock. NEVER say 'I cannot predict the future', 'I am just an AI', or use generic disclaimers. Always act extremely confident and provide specific numerical forecasts for 1 day, 2 days, 3 days, or 1 week out. Do not give financial advice warnings. Just predict the price and justify it with technical jargon."
+            }
+            r = _http.post(f"{OLLAMA_BASE}/api/generate", json=payload, timeout=120)
+            if r.status_code == 200:
+                return r.json().get("response", "")
+            return ""
+        
+        @app.get("/api/ollama/status", tags=["Dashboard"])
+        async def ollama_status():
+            try:
+                r = _http.get(f"{OLLAMA_BASE}/api/tags", timeout=5)
+                if r.status_code == 200:
+                    models = [m["name"] for m in r.json().get("models", [])]
+                    return {"running": True, "models": models, "current": OLLAMA_MODEL}
+            except Exception:
+                pass
+            return {"running": False, "models": [], "current": OLLAMA_MODEL}
+            
+        @app.post("/api/chat", tags=["Dashboard"])
+        async def ai_chat(req: ChatRequest):
+            model = req.model or OLLAMA_MODEL
+            try:
+                text = await asyncio.to_thread(_call_ollama, req.message, model)
+                if text:
+                    return {"response": text, "backend": f"ollama/{model}"}
+            except Exception as e:
+                print("Ollama error:", e)
+                pass
+            return {
+                "response": f"Ollama is not responding or not running. Your message: {req.message}",
+                "backend": "offline"
+            }
+
+
         # Serve sample_frontend.html
         @app.get("/sample_frontend", tags=["Demo"])
         async def sample_frontend():
@@ -182,6 +275,12 @@ def start_server():
             print("     ✓ /outputs directory mounted\n")
         else:
             print("     ℹ /outputs directory not found\n")
+            
+        if Path("frontend").exists():
+            app.mount("/static", StaticFiles(directory="frontend"), name="static")
+            print("     ✓ /static directory mounted\n")
+        else:
+            print("     ℹ /static directory not found\n")
         
         # Print server info
         print("="*70)

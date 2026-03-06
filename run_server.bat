@@ -26,6 +26,6 @@ if errorlevel 1 (
 REM Start the server
 echo Starting server on http://localhost:8000
 echo.
-python run_local_server.py
+python serve.py
 
 pause

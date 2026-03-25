@@ -184,8 +184,12 @@ def start_server():
         print("[7b/8] Registering API endpoints...")
         try:
             from api_llm import router
+            from fastapi import Depends
+            from web_app_main import _get_user
+            # Secure all AI endpoints
+            router.dependencies.append(Depends(_get_user))
             app.include_router(router)
-            print("     ✓ 10 AI endpoints registered\n")
+            print("     ✓ 10 AI endpoints registered and secured\n")
         except Exception as e:
             app_logger.warning(f"AI endpoints unavailable: {type(e).__name__}")
             print(f"     ⚠ AI endpoints skipped ({type(e).__name__})\n")
@@ -214,7 +218,7 @@ def start_server():
         from pydantic import BaseModel
         
         OLLAMA_BASE = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-        OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
+        OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:latest")
         
         class ChatRequest(BaseModel):
             message: str

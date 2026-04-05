@@ -34,7 +34,7 @@ class HealthCheck:
                 memory = psutil.virtual_memory()
                 memory_percent = memory.percent
                 memory_available_mb = memory.available / (1024 * 1024)
-            except:
+            except Exception:
                 cpu_percent = 0
                 memory_percent = 0
                 memory_available_mb = 0
@@ -43,7 +43,7 @@ class HealthCheck:
             try:
                 disk = psutil.disk_usage('/')
                 disk_percent = disk.percent
-            except:
+            except Exception:
                 disk_percent = 0
         else:
             cpu_percent = 0
@@ -117,6 +117,7 @@ class HealthCheck:
     
     def get_detailed_metrics(self) -> Dict[str, Any]:
         """Get detailed performance metrics"""
+        from monitoring import performance_monitor
         return {
             "performance": performance_monitor.get_stats(),
             "health": self.get_health()

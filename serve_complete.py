@@ -1,21 +1,20 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, status, Depends
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import numpy as np
 import torch
-from typing import List, Optional, Dict
+from typing import List, Optional
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import glob
 import uvicorn
-import random
 import asyncio
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-import time
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -40,7 +39,7 @@ def load_users():
         try:
             with open(USERS_FILE, "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {"admin": "password123"}
     return {"admin": "password123"}
 
@@ -292,17 +291,7 @@ async def technical_indicators(symbol: str = "AAPL"):
         "indicators_status": "Strong Buy"
     }
 
-@app.post("/backtest")
-async def backtest_strategy(request: BacktestRequest):
-    return {
-        "symbol": request.symbol,
-        "start_date": request.start_date,
-        "end_date": request.end_date,
-        "total_return": 18.5,
-        "win_rate": 0.72,
-        "max_drawdown": -8.2,
-        "sharpe_ratio": 1.45
-    }
+# (duplicate /backtest route removed — use the /backtest POST handler above)
 
 @app.get("/news-sentiment")
 async def news_sentiment(symbol: str = "AAPL"):
@@ -384,12 +373,15 @@ async def health_check():
 
 # ==================== STARTUP EVENT ====================
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     load_latest_model()
     print("[START] API startup complete")
     print(f"[START] Model status: {'Loaded' if model else 'Not loaded (template mode)'}")
     print("[START] Visit http://localhost:8000 for the dashboard")
+    yield
+
+app.router.lifespan_context = lifespan
 
 # ==================== MAIN ====================
 

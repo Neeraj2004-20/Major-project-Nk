@@ -8,7 +8,6 @@ import json
 import hmac
 import hashlib
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
@@ -66,7 +65,7 @@ def load_users():
         try:
             with open(USERS_FILE, "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {"admin": "password123"}
     return {"admin": "password123"}
 

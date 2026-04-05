@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, status, Depends
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import numpy as np
 import torch
-from typing import List, Optional, Dict
+from typing import Any, Callable, Dict, List, Optional
 import os
 try:
     from dotenv import load_dotenv
@@ -13,28 +14,33 @@ try:
 except ImportError:
     pass  # dotenv not installed, rely on system env vars
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import glob
 import uvicorn
-import random
+
 import asyncio
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-import time
+
+
 
 try:
-    from ai_llm_integration import create_ai_intelligence
+    from ai_llm_integration import create_ai_intelligence as _create_ai
     AI_INTEGRATION_AVAILABLE = True
 except ImportError:
-    create_ai_intelligence = None
+    _create_ai = None  # type: ignore[assignment]
     AI_INTEGRATION_AVAILABLE = False
 
+create_ai_intelligence: Optional[Callable[..., Any]] = _create_ai  # type: ignore[misc]
+
 try:
-    from sentiment_analyzer import SentimentAnalyzer
+    from sentiment_analyzer import SentimentAnalyzer as _SentimentAnalyzer
     SENTIMENT_ANALYZER_AVAILABLE = True
 except ImportError:
-    SentimentAnalyzer = None
+    _SentimentAnalyzer = None  # type: ignore[assignment]
     SENTIMENT_ANALYZER_AVAILABLE = False
+
+SentimentAnalyzer: Optional[Any] = _SentimentAnalyzer  # type: ignore[misc]
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -42,6 +48,7 @@ app = FastAPI(
     version="2.0.0",
     description="Advanced transformer-based market prediction with Ollama LLM support"
 )
+# lifespan is wired in at the bottom after its definition
 
 # ==================== AUTHENTICATION ====================
 
@@ -59,7 +66,7 @@ def load_users():
         try:
             with open(USERS_FILE, "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {"admin": "password123"}
     return {"admin": "password123"}
 
@@ -393,17 +400,7 @@ async def technical_indicators(symbol: str = "AAPL"):
         "indicators_status": "Strong Buy"
     }
 
-@app.post("/backtest")
-async def backtest_strategy(request: BacktestRequest):
-    return {
-        "symbol": request.symbol,
-        "start_date": request.start_date,
-        "end_date": request.end_date,
-        "total_return": 18.5,
-        "win_rate": 0.72,
-        "max_drawdown": -8.2,
-        "sharpe_ratio": 1.45
-    }
+# (duplicate /backtest route removed — use the /backtest POST handler above)
 
 @app.get("/news-sentiment")
 async def news_sentiment(symbol: str = "AAPL", company_name: Optional[str] = None):
@@ -507,7 +504,7 @@ async def get_notifications():
 # ==================== AI/LLM ENDPOINTS ====================
 
 @app.post("/api/ai/chat")
-async def ai_chat(request: AIChatRequest):
+async def ai_llm_chat(request: AIChatRequest):
     ai_system = get_ai_intelligence()
     response = ai_system.chat(request.message)
     return {
@@ -738,13 +735,13 @@ async def ollama_status():
     return {"running": False, "models": [], "current": OLLAMA_MODEL}
 
 @app.post("/api/chat")
-async def ai_chat(req: ChatRequest, user: str = Depends(_get_user)):
-    model = req.model or OLLAMA_MODEL
+async def ollama_chat(req: ChatRequest, user: str = Depends(_get_user)):
+    llm_model = req.model or OLLAMA_MODEL
     # 1. Try Ollama
     try:
-        text = await asyncio.to_thread(_call_ollama, req.message, model)
+        text = await asyncio.to_thread(_call_ollama, req.message, llm_model)
         if text:
-            return {"response": text, "backend": f"ollama/{model}"}
+            return {"response": text, "backend": f"ollama/{llm_model}"}
     except Exception:
         pass
     # 2. Rule-based fallback
@@ -757,7 +754,7 @@ async def ai_chat(req: ChatRequest, user: str = Depends(_get_user)):
     return {
         "response": (
             f"Ollama is not running. Start it with `ollama serve` "
-            f"then pull a model: `ollama pull {model}`. "
+            f"then pull a model: `ollama pull {llm_model}`. "
             "Your message: " + req.message
         ),
         "backend": "offline"
@@ -765,8 +762,9 @@ async def ai_chat(req: ChatRequest, user: str = Depends(_get_user)):
 
 # ==================== STARTUP EVENT ====================
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """App lifespan: replaces deprecated @app.on_event handlers."""
     global ai_intelligence, sentiment_analyzer
     load_latest_model()
     if AI_INTEGRATION_AVAILABLE:
@@ -788,9 +786,12 @@ async def startup_event():
     print("[START] API startup complete")
     print(f"[START] Model status: {'Loaded' if model else 'Not loaded (template mode)'}")
     print("[START] Visit http://localhost:8000 for the dashboard")
+    yield  # server runs here
+
+# Wire lifespan into the app (defined after app to allow forward references)
+app.router.lifespan_context = lifespan
 
 # ==================== MAIN ====================
 
 if __name__ == "__main__":
     uvicorn.run("serve:app", host="127.0.0.1", port=8000, reload=True)
-

@@ -1,0 +1,25 @@
+{
+  "pythonVersion": "3.11",
+  "venvPath": ".",
+  "venv": ".venv-2",
+  "typeCheckingMode": "off",
+  "reportMissingModuleSource": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingImports": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportOptionalCall": "none",
+  "reportOptionalMemberAccess": "none",
+  "exclude": [
+    "**/__pycache__",
+    ".venv",
+    ".venv-1",
+    ".venv-2",
+    "llm",
+    "outputs",
+    "C:/tmp"
+  ]
+}

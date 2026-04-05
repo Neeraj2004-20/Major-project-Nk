@@ -18,11 +18,11 @@ class TradingSignal(str, Enum):
 
 class PredictionRequest(BaseModel):
     """Stock prediction request model"""
-    symbol: str = Field(..., min_length=1, max_length=10, example="AAPL")
-    current_price: float = Field(..., gt=0, example=150.50)
-    timeframe: str = Field("1d", example="1d")
-    include_sentiment: bool = Field(False, example=True)
-    include_technicals: bool = Field(True, example=True)
+    symbol: str = Field(..., min_length=1, max_length=10)
+    current_price: float = Field(..., gt=0)
+    timeframe: str = Field("1d")
+    include_sentiment: bool = Field(False)
+    include_technicals: bool = Field(True)
     
     @validator('symbol')
     def symbol_uppercase(cls, v):
@@ -44,8 +44,8 @@ class PredictionResponse(BaseModel):
 
 class AnalysisRequest(BaseModel):
     """Stock analysis request"""
-    symbol: str = Field(..., example="AAPL")
-    analysis_type: str = Field("comprehensive", example="comprehensive")
+    symbol: str = Field(...)
+    analysis_type: str = Field("comprehensive")
     include_sentiment: bool = False
     include_news: bool = False
 
@@ -61,7 +61,7 @@ class AnalysisResponse(BaseModel):
 
 class HealthStatus(BaseModel):
     """System health status"""
-    status: str = Field(..., example="healthy")
+    status: str = Field(...)
     timestamp: datetime
     uptime_seconds: float
     uptime_formatted: str
@@ -88,7 +88,7 @@ class PortfolioOptimizationRequest(BaseModel):
     """Portfolio optimization request"""
     symbols: List[str] = Field(..., min_items=1, max_items=50)
     amounts: List[float] = Field(..., min_items=1, max_items=50)
-    risk_level: str = Field("medium", example="low|medium|high")
+    risk_level: str = Field("medium")
 
 
 class PortfolioOptimizationResponse(BaseModel):
@@ -117,9 +117,9 @@ class BulkPredictionResponse(BaseModel):
 class AlertRequest(BaseModel):
     """Trading alert configuration"""
     symbol: str
-    alert_type: str = Field("price", example="price|sentiment|signal")
+    alert_type: str = Field("price")
     threshold: float
-    action: str = Field("notify", example="notify|execute")
+    action: str = Field("notify")
 
 
 class AlertResponse(BaseModel):

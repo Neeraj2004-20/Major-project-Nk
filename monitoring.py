@@ -4,8 +4,6 @@ Structured logging with performance tracking
 """
 
 import logging
-import time
-import json
 from datetime import datetime
 from typing import Dict, Any, Optional
 from pathlib import Path

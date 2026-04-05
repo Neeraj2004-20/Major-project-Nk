@@ -8,10 +8,9 @@ import json
 import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
+import numpy as np
 
 logger = logging.getLogger(__name__)
-
-# Lazy imports - will be loaded when needed
 LLMMarketAnalyst = None
 MarketAnalysisInput = None
 create_analyst = None
@@ -26,7 +25,6 @@ def _ensure_imports():
     
     if LLMMarketAnalyst is None:
         try:
-            import numpy as np
             from llm_market_analyst import LLMMarketAnalyst as LMA, MarketAnalysisInput as MAI, create_analyst as ca
             from ai_conversation import AIMarketConversationAgent as AMCA, create_conversation_agent as cca
             LLMMarketAnalyst = LMA
@@ -92,7 +90,7 @@ class AIMarketIntelligence:
                 sentiments = sentiment_analyzer.analyze_multiple(news_headlines)
                 sentiment_score = np.mean([s['score'] for s in sentiments])
                 top_sentiments = sentiments[:3]
-            except:
+            except Exception:
                 sentiment_score = 0
         
         # Prepare analysis input

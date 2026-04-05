@@ -73,7 +73,6 @@ def start_server():
     try:
         from fastapi import FastAPI, Depends
         from fastapi.staticfiles import StaticFiles
-        from fastapi.responses import JSONResponse
         from fastapi.middleware.cors import CORSMiddleware
         import uvicorn
 

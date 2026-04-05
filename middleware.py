@@ -3,13 +3,12 @@ Middleware & Error Handling
 Rate limiting, custom error handling, request validation
 """
 
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Dict, Callable
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from config import settings
 from monitoring import performance_monitor, logger
 
